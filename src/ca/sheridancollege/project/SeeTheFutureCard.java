@@ -4,6 +4,9 @@
  */
 package ca.sheridancollege.project;
 
-public class SeeTheFutureCard {
-    
+public class SeeTheFutureCard extends Card {
+    @Override
+    public String toString() {
+        return "See the Future - Peek at the top 3 cards of the deck.";
+    }
 }

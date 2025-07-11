@@ -4,6 +4,9 @@
  */
 package ca.sheridancollege.project;
 
-public class SkipCard {
-    
+public class SkipCard extends Card {
+    @Override
+    public String toString() {
+        return "Skip - Avoid drawing a card this turn.";
+    }
 }

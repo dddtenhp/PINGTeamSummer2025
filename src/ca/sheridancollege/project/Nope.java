@@ -4,6 +4,9 @@
  */
 package ca.sheridancollege.project;
 
-public class Nope {
-    
+public class Nope extends Card {
+    @Override
+    public String toString() {
+        return "Nope - Instantly cancel the effect of another action card.";
+    }
 }

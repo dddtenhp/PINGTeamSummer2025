@@ -4,6 +4,9 @@
  */
 package ca.sheridancollege.project;
 
-public class AttackCard {
-    
+public class AttackCard extends Card {
+    @Override
+    public String toString() {
+        return "️Attack - End your turn and force the next player to take two turns!";
+    }
 }

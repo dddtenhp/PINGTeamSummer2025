@@ -1,13 +1,9 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package ca.sheridancollege.project;
 
-/**
- *
- * @author hhtan
- */
-public class ExplodingKittenCard {
-    
+public class ExplodingKittenCard extends Card {
+
+    @Override
+    public String toString() {
+        return "Exploding Kitten - Boom! You're out unless you defuse.";
+    }
 }

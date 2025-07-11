@@ -35,7 +35,9 @@ public class GroupOfCards {
     }
 
     public void shuffle() {
-        Collections.shuffle(cards);
+        if (cards!= null && !cards.isEmpty()){
+            Collections.shuffle(cards);
+        }   
     }
 
     /**
@@ -51,5 +53,24 @@ public class GroupOfCards {
     public void setSize(int size) {
         this.size = size;
     }
+    
+    public boolean isEmpty() {
+        return cards.isEmpty();
+    }
+    
+    public int actualSize() {
+        return cards.size();
+    }
+    
+    // Methods to add/remove single cards if needed for hands/discard piles
+    public void addCard(Card card) {
+        this.cards.add(card);
+    }
 
+    public Card removeCard(int index) {
+        if (index >= 0 && index < cards.size()) {
+            return cards.remove(index);
+        }
+        return null; // Or throw an exception
+    }
 }//end class

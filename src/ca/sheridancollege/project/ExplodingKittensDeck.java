@@ -1,13 +1,32 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package ca.sheridancollege.project;
 
-/**
- *
- * @author hhtan
- */
-public class ExplodingKittensDeck {
-    
+public class ExplodingKittensDeck extends GroupOfCards {
+
+    public ExplodingKittensDeck() {
+        super(56);
+        for (int i = 0; i < 4; i++) {
+            getCards().add(new ExplodingKittenCard());
+            getCards().add(new SkipCard());
+            getCards().add(new ShuffleCard());
+            getCards().add(new FavorCard());
+            
+            // cat cards
+            getCards().add(new TacocatCard());
+            getCards().add(new HairyPotatoCatCard());
+            getCards().add(new RainbowRalphingCatCard());
+            getCards().add(new BeardCatCard());
+            getCards().add(new CattermelonCard());
+        }
+        for (int i = 0; i < 6; i++) {
+            getCards().add(new DefuseCard());
+        }
+
+        for (int i = 0; i < 5; i++) {
+            getCards().add(new AttackCard());
+            getCards().add(new Nope());
+            getCards().add(new SeeTheFutureCard());
+        }
+
+        shuffle();
+    }
 }

@@ -4,6 +4,9 @@
  */
 package ca.sheridancollege.project;
 
-public class FavorCard {
-    
+public class FavorCard extends Card {
+    @Override
+    public String toString() {
+        return "Favor - Ask another player to give you one card from their hand.";
+    }
 }

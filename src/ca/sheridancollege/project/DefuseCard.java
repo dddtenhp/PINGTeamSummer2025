@@ -4,10 +4,9 @@
  */
 package ca.sheridancollege.project;
 
-/**
- *
- * @author hhtan
- */
-public class DefuseCard {
-    
+public class DefuseCard extends Card{
+    @Override
+    public String toString() {
+        return "Defuse - Block the explosion and stay alive.";
+    }
 }
