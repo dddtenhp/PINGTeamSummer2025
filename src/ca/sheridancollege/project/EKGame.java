@@ -5,20 +5,24 @@ import java.util.stream.Collectors;
 
 public class EKGame extends Game {
 
-    private final EKDeck deck;
-
-    private final Map<EKPlayer, Integer> pendingTurns = new HashMap<>();
-    private int current = 0;
-
-    public EKGame(String name, List<EKPlayer> players, EKDeck starterDeck) {
+    private static EKGame INSTANCE;
+    public static synchronized EKGame getInstance(String name, List<EKPlayer> players, EKDeck starterDeck) {
+        if (INSTANCE == null) {
+            INSTANCE = new EKGame(name, players, starterDeck);
+        }
+        return INSTANCE;
+    }
+    private EKGame(String name, List<EKPlayer> players, EKDeck starterDeck) {
         super(name);
         setPlayers(new ArrayList<>(players));
         this.deck = starterDeck;
     }
 
-    public EKDeck getDeck() {
-        return deck;
-    }
+    private final EKDeck deck;
+    private final Map<EKPlayer, Integer> pendingTurns = new HashMap<>();
+    private int current = 0;
+
+    public EKDeck getDeck() { return deck; }
 
     public int getPendingTurns(EKPlayer p) {
         return pendingTurns.getOrDefault(p, 1);
@@ -32,8 +36,8 @@ public class EKGame extends Game {
             System.out.println("\n=== " + player.getName() + "'s turn ===");
             player.takeTurn(this, in);
 
-            pendingTurns.remove(player);                       
-            current = (current + 1) % alivePlayers().size();   
+            pendingTurns.remove(player);
+            current = (current + 1) % alivePlayers().size();
         }
         declareWinner();
     }
@@ -51,11 +55,11 @@ public class EKGame extends Game {
         if (t != CardType.NOPE
                 && t != CardType.DEFUSE
                 && t != CardType.EXPLODING_KITTEN
-                && t != CardType.CAT) 
+                && t != CardType.CAT)
         {
             if (offerNope(user, in)) {
                 System.out.println("Action was NOPE'd! Turn ends.");
-                return true;             
+                return true;
             }
         }
 
@@ -68,7 +72,7 @@ public class EKGame extends Game {
 
             case ATTACK:
                 EKPlayer next = nextPlayer();
-                int turns = pendingTurns.getOrDefault(next, 1) + 1; 
+                int turns = pendingTurns.getOrDefault(next, 1) + 1;
                 pendingTurns.put(next, turns);
                 endTurn = true;
                 break;
@@ -80,7 +84,7 @@ public class EKGame extends Game {
 
             case SEE_THE_FUTURE:
                 peekTop(3);
-                endTurn = true;           
+                endTurn = true;
                 break;
 
             case FAVOR:
@@ -113,7 +117,7 @@ public class EKGame extends Game {
                 if (in.nextLine().trim().equalsIgnoreCase("y")) {
                     p.getHand().remove(nope.get());
                     deck.discard(nope.get());
-                    return true;           
+                    return true;          
                 }
             }
         }
@@ -217,7 +221,6 @@ public class EKGame extends Game {
         }
     }
 
-    /* ---------- player utilities ---------- */
     private EKPlayer choosePlayer(EKPlayer exclude, Scanner in) {
         List<EKPlayer> others = alivePlayers().stream()
                 .filter(p -> p != exclude)
@@ -244,4 +247,3 @@ public class EKGame extends Game {
                 .collect(Collectors.toList());
     }
 }
-
