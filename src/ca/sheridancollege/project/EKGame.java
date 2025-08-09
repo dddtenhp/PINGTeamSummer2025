@@ -113,7 +113,7 @@ public class EKGame extends Game {
                 if (in.nextLine().trim().equalsIgnoreCase("y")) {
                     p.getHand().remove(nope.get());
                     deck.discard(nope.get());
-                    return true;           // first NOPE cancels action
+                    return true;           
                 }
             }
         }
@@ -244,3 +244,4 @@ public class EKGame extends Game {
                 .collect(Collectors.toList());
     }
 }
+
