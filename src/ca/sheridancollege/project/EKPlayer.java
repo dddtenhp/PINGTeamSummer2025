@@ -20,7 +20,6 @@ public class EKPlayer extends Player {
         return hand;
     }
 
-    /* give random card for Favor or 2-of-a-kind steal */
     public Card giveRandomCard() {
         return hand.remove(new Random().nextInt(hand.size()));
     }
@@ -35,7 +34,6 @@ public class EKPlayer extends Player {
 
         while (turns-- > 0 && alive) {
 
-            /* win check (can happen after steals etc.) */
             if (hand.isEmpty()) {
                 System.out.println("\n*** " + getName()
                         + " has no cards left and WINS! ***");
@@ -144,4 +142,5 @@ public class EKPlayer extends Player {
         }
     }
 }
+
 
