@@ -25,9 +25,6 @@ public class EKPlayer extends Player {
         return hand.remove(new Random().nextInt(hand.size()));
     }
 
-    /* ============================================================ */
- /*                            TURN                              */
- /* ============================================================ */
     @Override
     public void play() {
          }
@@ -147,3 +144,4 @@ public class EKPlayer extends Player {
         }
     }
 }
+
