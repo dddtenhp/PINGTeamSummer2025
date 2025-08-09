@@ -47,7 +47,6 @@ public class EKPlayer extends Player {
                 System.out.println("Choose ONE card # to play, or press Enter to pass:");
                 String line = in.nextLine().trim();
 
-                /* player passes → draw later */
                 if (line.isEmpty()) {
                     break;
                 }
@@ -71,11 +70,9 @@ public class EKPlayer extends Player {
                         }
                     }
 
-                    /* remove and process */
                     EKCard chosen = (EKCard) hand.remove(idx);
                     endWithoutDraw = game.processCard(this, chosen, in);
 
-                    /* win check after playing */
                     if (hand.isEmpty()) {
                         System.out.println("\n*** " + getName()
                                 + " has no cards left and WINS! ***");
@@ -142,5 +139,6 @@ public class EKPlayer extends Player {
         }
     }
 }
+
 
 
