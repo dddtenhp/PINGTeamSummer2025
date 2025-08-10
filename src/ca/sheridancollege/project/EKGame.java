@@ -36,7 +36,10 @@ public class EKGame extends Game {
             System.out.println("\n=== " + player.getName() + "'s turn ===");
             player.takeTurn(this, in);
 
+            // Clear consumed pending turns for this player (EKPlayer should loop internally).
             pendingTurns.remove(player);
+
+            // Advance to next alive player
             current = (current + 1) % alivePlayers().size();
         }
         declareWinner();
@@ -50,16 +53,20 @@ public class EKGame extends Game {
     public boolean processCard(EKPlayer user, EKCard card, Scanner in) {
 
         CardType t = card.getType();
+
         deck.discard(card);
 
-        if (t != CardType.NOPE
-                && t != CardType.DEFUSE
-                && t != CardType.EXPLODING_KITTEN
-                && t != CardType.CAT)
-        {
-            if (offerNope(user, in)) {
-                System.out.println("Action was NOPE'd! Turn ends.");
-                return true;
+        boolean actionCancelable =
+                t != CardType.NOPE &&
+                t != CardType.DEFUSE &&
+                t != CardType.EXPLODING_KITTEN &&
+                t != CardType.CAT;
+
+        if (actionCancelable) {
+            boolean canceled = offerNopeWar(user, in);
+            if (canceled) {
+                System.out.println("Action was NOPE'd and is cancelled. You may continue your turn.");
+                return false; 
             }
         }
 
@@ -70,78 +77,117 @@ public class EKGame extends Game {
                 endTurn = true;
                 break;
 
-            case ATTACK:
+            case ATTACK: {
                 EKPlayer next = nextPlayer();
                 int turns = pendingTurns.getOrDefault(next, 1) + 1;
                 pendingTurns.put(next, turns);
                 endTurn = true;
+                System.out.println("ATTACK played. " + next.getName() + " now has " + turns + " turn(s) pending.");
                 break;
+            }
 
             case SHUFFLE:
                 deck.shuffle();
-                endTurn = true;
+                System.out.println("Deck shuffled.");
+                endTurn = false;
                 break;
 
             case SEE_THE_FUTURE:
                 peekTop(3);
-                endTurn = true;
+                endTurn = false;
                 break;
 
             case FAVOR:
                 favor(user, in);
-                endTurn = true;
+                endTurn = false;
                 break;
 
             case CAT:
                 comboCheck(user, in);
-                endTurn = true;
+                endTurn = false;
                 break;
 
             default:
+                endTurn = false;
                 break;
         }
+
         return endTurn;
     }
 
-    private boolean offerNope(EKPlayer actor, Scanner in) {
-        List<EKPlayer> others = alivePlayers().stream()
-                .filter(p -> p != actor)
-                .collect(Collectors.toList());
+    private boolean offerNopeWar(EKPlayer actor, Scanner in) {
+        int nopeCount = 0;
 
-        for (EKPlayer p : others) {
-            Optional<Card> nope = p.getHand().stream()
-                    .filter(c -> ((EKCard) c).getType() == CardType.NOPE)
-                    .findFirst();
-            if (nope.isPresent()) {
-                System.out.println(p.getName() + ", you have a NOPE. Play it? (y/n)");
-                if (in.nextLine().trim().equalsIgnoreCase("y")) {
-                    p.getHand().remove(nope.get());
-                    deck.discard(nope.get());
-                    return true;          
+        while (true) {
+            boolean someonePlayedThisRound = false;
+
+            for (EKPlayer p : alivePlayers()) {
+                if (p == actor) continue;
+
+                Optional<Card> nopeCard = p.getHand().stream()
+                        .filter(c -> ((EKCard) c).getType() == CardType.NOPE)
+                        .findFirst();
+
+                if (nopeCard.isPresent()) {
+                    System.out.println(p.getName() + ", you have a NOPE. Play it? (y/n)");
+                    String ans = in.nextLine().trim();
+                    if (ans.equalsIgnoreCase("y")) {
+                        p.getHand().remove(nopeCard.get());
+                        deck.discard(nopeCard.get());
+                        nopeCount++;
+                        someonePlayedThisRound = true;
+
+                        System.out.println("NOPE played! (Total NOPEs: " + nopeCount + ")");
+                    }
                 }
             }
+
+            if (!someonePlayedThisRound) {
+                break; 
+            } else {
+                System.out.println("Counter-NOPE window... (another round of offers)");
+            }
         }
-        return false;
+
+        boolean cancelled = (nopeCount % 2 == 1);
+        if (!cancelled && nopeCount > 0) {
+            System.out.println("NOPEs cancelled out. Action proceeds.");
+        }
+        return cancelled;
     }
 
     private void peekTop(int n) {
-        System.out.println("Top " + n + " cards:");
-        deck.getCards().stream().limit(n).forEach(System.out::println);
+        List<Card> cards = deck.getCards();
+        int size = cards.size();
+        if (size == 0) {
+            System.out.println("Deck is empty.");
+            return;
+        }
+        int show = Math.min(n, size);
+        System.out.println("Top " + show + " card(s):");
+        cards.stream().limit(show).forEach(System.out::println);
     }
 
     private void favor(EKPlayer user, Scanner in) {
         EKPlayer target = choosePlayer(user, in);
         if (target == null) {
+            System.out.println("No valid target for FAVOR.");
+            return;
+        }
+        if (target.getHand().isEmpty()) {
+            System.out.println(target.getName() + " has no cards. FAVOR fizzles.");
             return;
         }
         Card received = target.giveRandomCard();
-        user.getHand().add(received);
-        System.out.println(user.getName() + " received " + received
-                + " from " + target.getName());
+        if (received != null) {
+            user.getHand().add(received);
+            System.out.println(user.getName() + " received " + received + " from " + target.getName());
+        } else {
+            System.out.println("Could not take a card (target hand empty).");
+        }
     }
 
     private void comboCheck(EKPlayer user, Scanner in) {
-
         List<CardType> triples = user.getDuplicates(3).stream()
                 .filter(t -> t == CardType.CAT)
                 .collect(Collectors.toList());
@@ -151,9 +197,9 @@ public class EKGame extends Game {
 
         if (!triples.isEmpty()) {
             System.out.println("Play 3-of-a-kind for named steal? (y/n)");
-            if (in.nextLine().trim().equalsIgnoreCase("y")) {
+            if (yes(in)) {
 
-                if (offerNope(user, in)) {
+                if (offerNopeWar(user, in)) {
                     System.out.println("Combo was NOPE'd!");
                     return;
                 }
@@ -161,13 +207,12 @@ public class EKGame extends Game {
                 CardType chosen = triples.get(0);
                 removeCards(user, chosen, 3);
                 EKPlayer target = choosePlayer(user, in);
+                if (target == null) {
+                    System.out.println("No valid target. Combo cancelled.");
+                    return;
+                }
 
-                System.out.println("Name a card type to steal "
-                        + Arrays.stream(CardType.values())
-                                .map(Enum::name)
-                                .map(s -> s.replace('_', ' '))
-                                .collect(Collectors.joining(", ")) + ":");
-
+                System.out.println("Name a card type to steal (e.g., SEE_THE_FUTURE, FAVOR, DEFUSE, etc.):");
                 String raw = in.nextLine().trim().toUpperCase().replace(' ', '_');
                 CardType named;
                 try {
@@ -181,9 +226,10 @@ public class EKGame extends Game {
 
         } else if (!pairs.isEmpty()) {
             System.out.println("Play 2-of-a-kind to steal random card? (y/n)");
-            if (in.nextLine().trim().equalsIgnoreCase("y")) {
+            if (yes(in)) {
 
-                if (offerNope(user, in)) {
+                // Can be NOPE'd
+                if (offerNopeWar(user, in)) {
                     System.out.println("Combo was NOPE'd!");
                     return;
                 }
@@ -191,11 +237,28 @@ public class EKGame extends Game {
                 CardType chosen = pairs.get(0);
                 removeCards(user, chosen, 2);
                 EKPlayer target = choosePlayer(user, in);
+                if (target == null) {
+                    System.out.println("No valid target. Combo cancelled.");
+                    return;
+                }
+                if (target.getHand().isEmpty()) {
+                    System.out.println(target.getName() + " has no cards to steal.");
+                    return;
+                }
                 Card taken = target.giveRandomCard();
-                user.getHand().add(taken);
-                System.out.println("Stole " + taken + " from " + target.getName());
+                if (taken != null) {
+                    user.getHand().add(taken);
+                    System.out.println("Stole " + taken + " from " + target.getName());
+                } else {
+                    System.out.println("Failed to steal (target hand empty).");
+                }
             }
         }
+    }
+
+    private boolean yes(Scanner in) {
+        String s = in.nextLine().trim();
+        return s.equalsIgnoreCase("y") || s.equalsIgnoreCase("yes");
     }
 
     private void stealNamed(EKPlayer user, EKPlayer target, CardType named) {
@@ -228,11 +291,21 @@ public class EKGame extends Game {
         if (others.isEmpty()) {
             return null;
         }
-        for (int i = 0; i < others.size(); i++) {
-            System.out.printf("[%d] %s%n", i + 1, others.get(i).getName());
+
+        while (true) {
+            System.out.println("Choose a player:");
+            for (int i = 0; i < others.size(); i++) {
+                System.out.printf("[%d] %s%n", i + 1, others.get(i).getName());
+            }
+            String raw = in.nextLine().trim();
+            try {
+                int sel = Integer.parseInt(raw) - 1;
+                if (sel >= 0 && sel < others.size()) {
+                    return others.get(sel);
+                }
+            } catch (NumberFormatException ignored) { }
+            System.out.println("Invalid selection. Try again.");
         }
-        int sel = Integer.parseInt(in.nextLine().trim()) - 1;
-        return others.get(sel);
     }
 
     private EKPlayer nextPlayer() {
